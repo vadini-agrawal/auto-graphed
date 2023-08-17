@@ -1,22 +1,11 @@
 <div align="center">
-  <h1>🪨 Obsidian Plugin Creation</h1>
-  <p>How to create your own Obsidian plugin</p>
+  <h1>🪨 Obsidian Auto-Graphed</h1>
+  <p>An Obsidian plugin to auto-connect your notes</p>
 </div>
-
-# About Obsidian
-
-- [Obsidian](https://obsidian.md) is a **note taking** app based on Markdown files
-- It's **extensible**
 
 # About this plugin
 
-- Simple plugin, that counts the number of lines of the active file
-- The line count will be visible in the status bar
-
-# Resources
-
-- Official [Obsidian Plugin Template](https://github.com/obsidianmd/obsidian-sample-plugin)
-- Unofficial [Obsidian Plugin Developer Docs](https://marcus.se.net/obsidian-plugin-docs)
+- In progress 🛠️
 
 # Usage
 
@@ -33,17 +22,13 @@
 
 1. Open terminal
 2. `cd path/to/your/obsidian/vault/.obsidian/plugins`
-3. `git clone https://github.com/flolu/obsidian-plugin`
+3. `git clone <this plugin>`
 4. `npm install`
 5. `npm run dev`
 6. In Obsidian, press `Ctrl + P` and select `Reload app without saving`
-7. In Obsidian, go to settings -> Community plugins -> Enable "Example Plugin"
+7. In Obsidian, go to settings -> Community plugins -> Enable "AutoGraphed"
 
 **Commands**
 
 - `npm i` (Install dependencies)
 - `npm run dev` (Install dependencies)
-
-**Releasing**
-
-- [Releasing new releases](https://github.com/obsidianmd/obsidian-sample-plugin#releasing-new-releases)

@@ -3,7 +3,7 @@
 	"name": "AutoGraphed",
 	"version": "0.0.0",
 	"minAppVersion": "0.0.0",
-	"description": "This is a toy version of an Obsidian auto-graphing plugin. It will automatically graph all your notes and their links.",
+	"description": "This is a beta version of an Obsidian auto-graphing plugin. It will automatically graph all your notes and their links.",
 	"author": "Vadini Agrawal",
 	"authorUrl": "https://vadiniagrawal.com",
 	"fundingUrl": "",

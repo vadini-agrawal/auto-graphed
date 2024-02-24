@@ -1,13 +1,13 @@
 <div align="center">
   <h1>🪨 Obsidian AutoGraphed</h1>
-  <p>An Obsidian plugin to auto-connect your notes</p>
+  <p>An Obsidian plugin to auto-connect your notes with one click</p>
 </div>
 
 # About this plugin
 
-This is a beta version of an Obsidian plug in to automatically create connections between your notes via an LLM.
+This is a beta version of an Obsidian plug-in to automatically create connections between your markdown notes via an LLM.
 
-You can input an OpenAI API key and choose a GPT model and it will help you auto-generate connections between your notes.
+You can input an OpenAI API key and choose a GPT model and it will auto-generate connections between your notes.
 
 Note that we are constrained by the [token limit](https://platform.openai.com/account/limits) of your chosen model.
 
@@ -32,6 +32,9 @@ You have the ability to generate tags and then delete all generated tags if desi
 5. `npm run dev`
 6. In Obsidian, press `Ctrl + P` and select `Reload app without saving`
 7. In Obsidian, go to settings -> Community plugins -> Enable "AutoGraphed"
+8. In AutoGraphed settings, input an API key and select a model.
+9. On your Obsidian platform, in the left toolbar, click on the "cloud" icon to generate connections.
+10. Click on the icon below it to remove generated connections.
 
 **Commands**
 

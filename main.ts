@@ -25,6 +25,9 @@ export default class AutoGraphedPlugin extends Plugin {
     statusBarElement: HTMLSpanElement;
 
     shouldBeExcluded(filePath: string) {
+        if (this.settings.files_to_exclude[0] === '') {
+            this.settings.files_to_exclude = []
+        }
         if (this.settings.files_to_exclude.length > 0) {
             // Having issues with .some()
             for (let i = 0; i < this.settings.files_to_exclude.length; i++) {
@@ -40,6 +43,9 @@ export default class AutoGraphedPlugin extends Plugin {
     }
 
     shouldBeIncluded(filePath: string) {
+        if (this.settings.files_to_include[0] === '') {
+            this.settings.files_to_include = []
+        }
         if (this.settings.files_to_include.length > 0) {
             // Having issues with .some()
             for (let i = 0; i < this.settings.files_to_include.length; i++) {
@@ -63,8 +69,17 @@ export default class AutoGraphedPlugin extends Plugin {
             const files = this.app.vault.getMarkdownFiles();
             const fileContents: Record<string, string> = {};
 
+            // This adds a status bar item to the bottom of the app. Does not work on mobile apps.
+            const statusBarItemEl = this.addStatusBarItem();
+            statusBarItemEl.setText('Processing notes...');
+
             // Compile details from each file
             for (const file of files) {
+                console.log(file.path);
+                console.log('exclude');
+                console.log(this.shouldBeExcluded(file.path));
+                console.log('include');
+                console.log(this.shouldBeIncluded(file.path));
                 if (!this.shouldBeExcluded(file.path) && this.shouldBeIncluded(file.path)) {
                     console.log(file.path);
                     fileContents[file.basename] = await this.app.vault.read(file);
@@ -73,13 +88,14 @@ export default class AutoGraphedPlugin extends Plugin {
 
             const processedContents = preprocessAndDeduplicateNotes(fileContents);
 
+            statusBarItemEl.setText('Getting connections...');
             const connections = await this.askConnections(processedContents);
 
             for (const file of files) {
                 if (connections[file.basename]) {
                     const content = await this.app.vault.read(file);
 
-                    // Check if "## Auto-Gen Connections" already exists in the file.
+                    // Check if "### Auto-Gen Connections" already exists in the file.
                     const splitContent = content.split("### Auto-Gen Connections\n");
                     let preexistingContent = splitContent[0]; // The content before "## Auto-Gen Connections"
 
@@ -95,32 +111,34 @@ export default class AutoGraphedPlugin extends Plugin {
                 }
             }
             
+            statusBarItemEl.setText('Done!');
+            statusBarItemEl.setText('');
             // Display connections
             new Notice(`Auto-generated connections with ${this.settings.selected_gpt_model}`);
         });
+    }
 
-        this.addRibbonIcon('list-x', 'Remove auto-gen connections', async () => {
-            const files = this.app.vault.getMarkdownFiles();
-            const fileContents: Record<string, string> = {};
+    async removeAutoGenConnections() {
+        const files = this.app.vault.getMarkdownFiles();
+        const fileContents: Record<string, string> = {};
 
-            // Compile details from each file
-            for (const file of files) {
-                fileContents[file.basename] = await this.app.vault.read(file);
-            }
+        // Compile details from each file
+        for (const file of files) {
+            fileContents[file.basename] = await this.app.vault.read(file);
+        }
 
-            for (const file of files) {
-                const content = await this.app.vault.read(file);
+        for (const file of files) {
+            const content = await this.app.vault.read(file);
 
-                // Check if "## Auto-Gen Connections" already exists in the file.
-                const splitContent = content.split("## Auto-Gen Connections\n");
-                let preexistingContent = splitContent[0]; // The content before "## Auto-Gen Connections"
+            // Check if "## Auto-Gen Connections" already exists in the file.
+            const splitContent = content.split("### Auto-Gen Connections\n");
+            let preexistingContent = splitContent[0]; // The content before "## Auto-Gen Connections"
 
-                // Concatenate new content
-                const appendedContent = preexistingContent;
+            // Concatenate new content
+            const appendedContent = preexistingContent;
 
-                await this.app.vault.modify(file, appendedContent);
-            }
-        });
+            await this.app.vault.modify(file, appendedContent);
+        }
     }
 
     onunload() {
@@ -174,6 +192,7 @@ export default class AutoGraphedPlugin extends Plugin {
                 }
             });
     
+            console.log(messages);
             if (response.data && response.data.choices && response.data.choices.length > 0) {
                 return response.data.choices[0].message.content?.trim() || '';
             } else {
@@ -259,15 +278,31 @@ class AutoGraphedSettingTab extends PluginSettingTab {
 
 
 	new Setting(containerEl).setName("Files to exclude").setDesc("Comma separated (no spaces) files or file paths to exclude in auto-generation. If empty will not exclude any. This overrides any files in files to include.").addText((text) => text.setPlaceholder("File path").setValue(this.plugin.settings.files_to_exclude.join(', ')).onChange(async (value) => {
-		this.plugin.settings.files_to_exclude = value.split(',');
-        console.log(this.plugin.settings.files_to_exclude);
+        if (value.length > 0) {
+            this.plugin.settings.files_to_exclude = value.split(',');
+        }
 		await this.plugin.saveSettings();
 	}));
 
-	new Setting(containerEl).setName("Files to include").setDesc("Comma separated (no spaces) files or file paths to include in auto-generation. If empty include all.").addText((text) => text.setPlaceholder("File path").setValue(this.plugin.settings.files_to_include.join(', ')).onChange(async (value) => {
-		this.plugin.settings.files_to_include = value.split(',');
-        console.log(this.plugin.settings.files_to_include);
+    new Setting(containerEl).setName("Files to include").setDesc("Comma separated (no spaces) files or file paths to include in auto-generation. If empty will include all.").addText((text) => text.setPlaceholder("File path").setValue(this.plugin.settings.files_to_include.join(', ')).onChange(async (value) => {
+		if (value.length > 0) {
+            this.plugin.settings.files_to_include = value.split(',');
+        }
 		await this.plugin.saveSettings();
 	}));
+
+    new Setting(containerEl)
+    .setName("Delete auto-generated notes")
+    .setDesc("DANGER! Irreversible. Delete all auto-generated notes.")
+    .addButton((button) => {
+        button
+            .setButtonText("Delete auto-generated notes")
+            .onClick(async () => {
+                this.plugin.removeAutoGenConnections();
+            });
+
+        button.buttonEl.style.backgroundColor = "red";
+        button.buttonEl.style.color = "white";
+    });
   }
 }

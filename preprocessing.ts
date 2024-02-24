@@ -8,8 +8,6 @@ export function preprocessAndDeduplicateNotes(files: NoteFiles): NoteFiles {
       // Deduplicate by filename
       uniqueFiles[fileName] = content;
 
-    //   const fillerWords = [' the ', ' a ', ' an ']; // Add more filler words as needed
-
       // Remove [[]] links
       let preprocessedContent = content.replace(/\[\[(.*?)\]\]/g, '$1');
 
@@ -26,11 +24,6 @@ export function preprocessAndDeduplicateNotes(files: NoteFiles): NoteFiles {
         .replace(/^\d+\.\s.*$/gm, '')      // Ordered list items
         .replace(/\n/g, '');               // Remove all newline characters
 
-      // Remove filler words
-    //   for (const filler of fillerWords) {
-    //     const regex = new RegExp(filler, 'gi');
-    //     preprocessedContent = preprocessedContent.replace(regex, ' ');
-    //   }
 
       uniqueFiles[fileName] = preprocessedContent;
       console.log(numTokensFromString(preprocessedContent));

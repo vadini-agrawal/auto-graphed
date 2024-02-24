@@ -8,17 +8,51 @@ import {preprocessAndDeduplicateNotes} from 'preprocessing';
 interface AutoGraphedSettings {
   api_key: string;
   selected_gpt_model: string,
+  files_to_include: string[],
+  files_to_exclude: string[],
 }
 
 const DEFAULT_SETTINGS: AutoGraphedSettings = {
   api_key: '',
   selected_gpt_model: 'gpt-3.5-turbo',
+  files_to_include: [],
+  files_to_exclude: [],
 }
 
 
 export default class AutoGraphedPlugin extends Plugin {
 	settings: AutoGraphedSettings;
     statusBarElement: HTMLSpanElement;
+
+    shouldBeExcluded(filePath: string) {
+        if (this.settings.files_to_exclude.length > 0) {
+            // Having issues with .some()
+            for (let i = 0; i < this.settings.files_to_exclude.length; i++) {
+                const path_to_exclude = this.settings.files_to_exclude[i];
+                if (path_to_exclude && filePath.startsWith(path_to_exclude)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
+
+    shouldBeIncluded(filePath: string) {
+        if (this.settings.files_to_include.length > 0) {
+            // Having issues with .some()
+            for (let i = 0; i < this.settings.files_to_include.length; i++) {
+                const path_to_include = this.settings.files_to_include[i];
+                if (path_to_include && filePath.startsWith(path_to_include)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return true;
+        }
+    }
 
     onload() {
 		this.loadSettings();
@@ -31,7 +65,10 @@ export default class AutoGraphedPlugin extends Plugin {
 
             // Compile details from each file
             for (const file of files) {
-                fileContents[file.basename] = await this.app.vault.read(file);
+                if (!this.shouldBeExcluded(file.path) && this.shouldBeIncluded(file.path)) {
+                    console.log(file.path);
+                    fileContents[file.basename] = await this.app.vault.read(file);
+                }
             }
 
             const processedContents = preprocessAndDeduplicateNotes(fileContents);
@@ -43,7 +80,7 @@ export default class AutoGraphedPlugin extends Plugin {
                     const content = await this.app.vault.read(file);
 
                     // Check if "## Auto-Gen Connections" already exists in the file.
-                    const splitContent = content.split("## Auto-Gen Connections\n");
+                    const splitContent = content.split("### Auto-Gen Connections\n");
                     let preexistingContent = splitContent[0]; // The content before "## Auto-Gen Connections"
 
                     // Create new connections string
@@ -52,18 +89,14 @@ export default class AutoGraphedPlugin extends Plugin {
                     let addNewLines = splitContent.length === 0 ? '\n\n\n' : '';
 
                     // Concatenate new content
-                    const appendedContent = preexistingContent + addNewLines + '## Auto-Gen Connections\n' + newConnections;
+                    const appendedContent = preexistingContent + addNewLines + '### Auto-Gen Connections\n' + newConnections;
 
                     await this.app.vault.modify(file, appendedContent);
                 }
             }
             
             // Display connections
-            console.log(connections);
-<<<<<<< HEAD
-=======
             new Notice(`Auto-generated connections with ${this.settings.selected_gpt_model}`);
->>>>>>> 312c06b (Add basic settings tab)
         });
 
         this.addRibbonIcon('list-x', 'Remove auto-gen connections', async () => {
@@ -91,10 +124,6 @@ export default class AutoGraphedPlugin extends Plugin {
     }
 
     onunload() {
-<<<<<<< HEAD
-		// this.addSettingTab(new AutoGraphedSettingTab(this.app, this));
-=======
->>>>>>> 312c06b (Add basic settings tab)
     }
 
 	async loadSettings() {
@@ -117,16 +146,9 @@ export default class AutoGraphedPlugin extends Plugin {
 
         const gpt4Response = await this.callGPT(promptText);
 
-        console.log(gpt4Response);
-
         const connections: Record<string, string[]> = {};
         const matches = gpt4Response.matchAll(/Doc(?:ument)? (.*?): (.*?);/g);
-        console.log(matches);
         for (const match of matches) {
-<<<<<<< HEAD
-            console.log(match);
-=======
->>>>>>> 312c06b (Add basic settings tab)
             connections[match[1]] = match[2].split(', ').map((s: string) => s.trim());
         }
 
@@ -206,14 +228,12 @@ class AutoGraphedSettingTab extends PluginSettingTab {
 		text: "Please note that your notes are sent to OpenAI's servers to be processed and are subject to their Terms of Service"
 	});
 
-	// add a text input to enter the API key
 	new Setting(containerEl).setName("OpenAI API Key").setDesc("Required: an OpenAI API key is currently required to use AutoGraphed.").addText((text) => text.setPlaceholder("Enter your api key").setValue(this.plugin.settings.api_key).onChange(async (value) => {
 		this.plugin.settings.api_key = value.trim();
         console.log(this.plugin.settings.api_key);
 		await this.plugin.saveSettings();
 	}));
 
-	// add a button to test the API key is working
 	new Setting(containerEl).setName("Test your API Key").setDesc("Test your API Key").addButton((button) => button.setButtonText("Test API Key").onClick(async () => {
         // test API key
         const resp = await this.plugin.test_api_key();
@@ -236,44 +256,18 @@ class AutoGraphedSettingTab extends PluginSettingTab {
                 await this.plugin.saveSettings();
             });
     });
-  }
-}
 
 
-class AutoGraphedSettingTab extends PluginSettingTab {
-  plugin: AutoGraphedPlugin;
-
-  constructor(app: App, plugin: AutoGraphedPlugin) {
-    super(app, plugin);
-    this.plugin = plugin;
-  }
-
-  display(): void {
-    let { containerEl } = this;
-    
-	containerEl.empty();
-
-	containerEl.createEl("h1", {
-		text: "AutoGraphed Settings"
-	});
-
-	containerEl.createEl("h2", {
-		text: "OpenAI Settings"
-	});
-
-	containerEl.createEl("p", {
-		text: "Please note that your notes are sent to OpenAI's servers to be processed and are subject to their Terms of Service"
-	});
-
-	// add a text input to enter the API key
-	new Setting(containerEl).setName("OpenAI API Key").setDesc("Required: an OpenAI API key is currently required to use AutoGraphed.").addText((text) => text.setPlaceholder("Enter your api key").setValue(this.plugin.settings.api_key).onChange(async (value) => {
-		this.plugin.settings.api_key = value.trim();
+	new Setting(containerEl).setName("Files to exclude").setDesc("Comma separated (no spaces) files or file paths to exclude in auto-generation. If empty will not exclude any. This overrides any files in files to include.").addText((text) => text.setPlaceholder("File path").setValue(this.plugin.settings.files_to_exclude.join(', ')).onChange(async (value) => {
+		this.plugin.settings.files_to_exclude = value.split(',');
+        console.log(this.plugin.settings.files_to_exclude);
 		await this.plugin.saveSettings();
 	}));
 
-	// add a button to test the API key is working
-	new Setting(containerEl).setName("Test API Key").setDesc("Test API Key").addButton((button) => button.setButtonText("Test API Key").onClick(async () => {
-		new Notice("Smart Connections: API key is valid");
+	new Setting(containerEl).setName("Files to include").setDesc("Comma separated (no spaces) files or file paths to include in auto-generation. If empty include all.").addText((text) => text.setPlaceholder("File path").setValue(this.plugin.settings.files_to_include.join(', ')).onChange(async (value) => {
+		this.plugin.settings.files_to_include = value.split(',');
+        console.log(this.plugin.settings.files_to_include);
+		await this.plugin.saveSettings();
 	}));
   }
 }

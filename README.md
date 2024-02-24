@@ -7,20 +7,21 @@
 
 This is a beta version of an Obsidian plug in to automatically create connections between your notes via an LLM.
 
-You can input an API key and choose a GPT model and it will help you auto-generate connections between your notes.
+You can input an OpenAI API key and choose a GPT model and it will help you auto-generate connections between your notes.
 
-You have the ability to generate notes and then delete any generated notes that you don't like.
+Note that we are constrained by the [token limit](https://platform.openai.com/account/limits) of your chosen model.
+
+You have the ability to generate tags and then delete all generated tags if desired.
 
 # Usage
 
 **Requirement**
 
+-   [OpenAI account with credits](https://platform.openai.com/api-keys)
 -   [Obsidian](https://obsidian.md)
 -   [Git](https://git-scm.com)
 -   [GitHub](https://github.com) account
 -   [Node.js](https://nodejs.org)
--   Code Editor (I recommend [VSCode](https://code.visualstudio.com))
--   Basic [TypeScript](https://www.typescriptlang.org) knowledge
 
 **Installation**
 
